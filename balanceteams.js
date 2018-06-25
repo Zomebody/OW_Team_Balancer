@@ -1,5 +1,7 @@
 
-var roles = ["DPS", "Tank", "Support", "Flex"];
+// Timer variables, cut-off when difference > 5000ms
+var t0 = 0;//performance.now();
+var t1 = 0;//performance.now();
 
 // Order in which roles will be filled into the teams
 var slot_order = [
@@ -30,8 +32,8 @@ var slot_roles = [
 // Similar to Python's range(x, y)
 function arrayRange(from, to) {
 	arr = [];
-	for (i = from; i < to; i++) {
-		arr.push[i];
+	for (j = from; j < to; j++) {
+		arr.push(j);
 	}
 	return arr;
 }
@@ -46,10 +48,10 @@ function getSlot(roleCounts, index) {
 		"Not enough Support, Flex or DPS players.",
 		"This error should not appear?"
 	];
-	for (i = 0; i < slot_roles[index].length; i++) {
-		if (roleCounts[slot_roles[index][i]] > 0) {
-			roleCounts[slot_roles[index][i]]--;
-			return slot_roles[index][i];
+	for (f = 0; f < slot_roles[index].length; f++) {
+		if (roleCounts[slot_roles[index][f]] > 0) {
+			roleCounts[slot_roles[index][f]]--;
+			return slot_roles[index][f];
 		}
 	}
 	return errors[index];
@@ -86,13 +88,15 @@ function getSlotRoles(plrs) {
 var bestTeam = null;
 var lowestDif = Infinity;
 function checkBestTeam(comb) {
+	//console.log('comparing teams!');
+	//console.log(comb);
 	totalBlue = 0;
 	totalRed = 0;
-	for (i = 0; i < 12; i++) {
-		if (i < 6) { // blue player
-			totalBlue += comb[i]['sr'];
+	for (g = 0; g < 12; g++) {
+		if (g < 6) { // blue player
+			totalBlue += comb[g]['sr'];
 		} else { // red player
-			totalRed += comb[i]['sr'];
+			totalRed += comb[g]['sr'];
 		}
 	}
 	avgBlue = totalBlue/6;
@@ -112,10 +116,11 @@ function checkBestTeam(comb) {
 // Finds and stores all combinations (overwrites best stored combination)
 var curCombination = [null, null, null, null, null, null, null, null, null, null, null, null];
 function findCombinations(slotInfo, teamroles, tProgress, depth) {
+	//console.log(depth);
 	var curRole = teamroles[tProgress]['role'];
 	var curTeam = teamroles[tProgress]['team'];
 	var roleInfo = slotInfo[curRole][curTeam];
-	var plrs = roleInfo[curRole]['plrs']
+	var plrs = slotInfo[curRole]['plrs'];
 	if (roleInfo['fill'] == roleInfo['slots'].length) {
 		// Slots filled, skip to next team/role slot recursively
 		// Recursive call here in case you have like 0 Tank/Support players so youi can skip the loop
@@ -125,9 +130,12 @@ function findCombinations(slotInfo, teamroles, tProgress, depth) {
 		var indexes = arrayRange(roleInfo['prev']+1, plrs.length);
 		if (curTeam == 'red') { // IN THE PYTHON CODE THIS IS WHERE I MADE A MISTAKE, I PUT BLUE INSTEAD OF RED
 			indexes = (arrayRange(roleInfo['prev']+1, plrs.length)).filter(function(e) {return !slotInfo[curRole]['blueindexes'].includes(e);});
-		}
+			//console.log(indexes);
+		} //else {console.log(indexes, roleInfo['prev']+1, plrs.length);}
+		
 		indexes.forEach(function(num) {
-			curCombination[roleInfo['slots'][roleInfo['fill']]] = plrs[num];
+			//console.log("slot:", roleInfo['slots'][roleInfo['fill']]);
+			curCombination[roleInfo['slots'][roleInfo['fill']]-1+(curTeam=='red' ? 6 : 0)] = plrs[num]; // no clue why the fuck I had to put -1 in here (my offset was wrong for some reason)
 			if (curTeam == 'blue') { // push to blueindexes
 				slotInfo[curRole]['blueindexes'].push(num);
 			}
@@ -137,7 +145,9 @@ function findCombinations(slotInfo, teamroles, tProgress, depth) {
 			} else {
 				var oldPrev = roleInfo['prev'];
 				roleInfo['prev'] = num;
-				findCombinations(slotInfo, teamroles, tProgress, depth+1);
+				if (performance.now() - t0 < 10000) { // do not enter recursion when you're running low on time!
+					findCombinations(slotInfo, teamroles, tProgress, depth+1);
+				}
 				roleInfo['prev'] = oldPrev;
 			}
 			roleInfo['fill']--;
@@ -156,6 +166,7 @@ arrC = arrA.filter(function(e) {return !arrB.includes(e);});
 
 // Initializer of function above
 function startCombinations(sRoles, plrs) {
+	t0 = performance.now();
 	// Hull for slot info
 	var sInfo = {
 		DPS: {
@@ -243,6 +254,8 @@ function generateTeams(plrsArray) { // player example: {name: 'John', sr: 5000, 
 		generated['errorMessage'] = "Could not find best teams";
 		generated['success'] = false;
 	}
+	t1 = performance.now();
+	console.log("Team generation took " + (t1 - t0) + " milliseconds for " + plrsArray.length + " players.")
 	return generated;
 }
 
