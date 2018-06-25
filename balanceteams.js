@@ -88,8 +88,7 @@ function getSlotRoles(plrs) {
 var bestTeam = null;
 var lowestDif = Infinity;
 function checkBestTeam(comb) {
-	//console.log('comparing teams!');
-	//console.log(comb);
+	/*
 	totalBlueTSF = 0;
 	totalRedTSF = 0;
 	totalBlueDPS = 0;
@@ -120,7 +119,27 @@ function checkBestTeam(comb) {
 		}
 		lowestDif = Math.abs(totalBlueTSF-totalRedTSF) + Math.abs(totalBlueDPS-totalRedDPS);
 	}
-	// TO DO: FINISH THIS BLOCK AND SEPERATE DPS AVERAGE FROM TEAM AVERAGE
+	*/
+	var totalBlue = 0;
+	var totalRed = 0;
+	for (g = 0; g < 12; g++) {
+		if (g < 6) { // blue player
+			totalBlue += comb[g]['sr'];
+		} else { // red player
+			totalRed += comb[g]['sr'];
+		}
+	}
+	var avgBlue = totalBlue/6;
+	var avgRed = totalRed/6;
+	if (Math.abs(totalBlue-totalRed) < lowestDif) {
+		bestTeam = {
+			blue: comb.slice(0, 6),
+			red: comb.slice(6, 12),
+			blueAvg: avgBlue,
+			redAvg: avgRed
+		}
+		lowestDif = Math.abs(totalBlue-totalRed);
+	}
 }
 
 // Finds and stores all combinations (overwrites best stored combination)
