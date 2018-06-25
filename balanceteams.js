@@ -265,7 +265,10 @@ function generateTeams(plrsArray) { // player example: {name: 'John', sr: 5000, 
 		generated['success'] = false;
 	}
 	t1 = performance.now();
-	console.log("Team generation took " + (t1 - t0) + " milliseconds for " + plrsArray.length + " players.")
+	console.log("Team generation took " + (t1 - t0) + " milliseconds for " + plrsArray.length + " players.");
+	if (t1 - t0 >= 1000) {
+		generated['errorMessage'] = "10 second timeout reached.";
+	}
 	return generated;
 }
 
