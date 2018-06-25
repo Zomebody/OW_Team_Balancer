@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+	<script type="text/javascript" src="https://cdn.rawgit.com/Zomebody/OW_Team_Balancer/master/balanceteams.js"></script>
+	<!--<script type="text/javascript" src="./balanceteams.js"></script>-->
+	<script>
+		function delete_row(e)
+		{
+			e.parentNode.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode.parentNode);
+		}
+	</script>
+	<script>
+		function generate_player(pname, role, sr)
+		{
+			var addto = document.getElementById('playersHolder')
+			if (document.getElementById('dataRow1').getElementsByClassName("input-group").length < 8) {
+				addto = document.getElementById('dataRow1')
+			} else if (document.getElementById('dataRow2').getElementsByClassName("input-group").length < 8) {
+				addto = document.getElementById('dataRow2')
+				document.getElementById('navButton2').classList.remove("disabled")
+			} else {
+				addto = document.getElementById('dataRow3')
+				document.getElementById('navButton3').classList.remove("disabled")
+			}
+			roles = ["DPS", "Tank", "Support", "Flex"]
+			var roletext = (!(isNaN(Number(role))) ? roles[role-1] : role);
+			addto.insertAdjacentHTML("beforeend", ""+
+		"	<div class=\"input-group pb-1 player-data-row\">" +
+		"		<div class=\"input-group-prepend\">" +
+		"			<span class=\"input-group-text\" id=\"\">" +
+		"				<button type=\"button\" class=\"close\" aria-label=\"Close\" onClick=\"" +
+		"				var x = this.getElementsByTagName('span')[0].getAttribute('isactive');" +
+		"				if (x == 'y') {" +
+		"					this.getElementsByTagName('span')[0].setAttribute('isactive', 'n');" +
+		"					this.getElementsByTagName('span')[0].innerHTML = '<';" +
+		"					var input = this.parentNode.parentNode.parentNode.getElementsByTagName('input');" +
+		"					var inputList = Array.prototype.slice.call(input);" +
+		"					inputList.forEach(function(elem) {" +
+		"						elem.style.backgroundColor = '#dddddd';" +
+		"					});" +
+		"				} else {" +
+		"					this.getElementsByTagName('span')[0].setAttribute('isactive', 'y');" +
+		"					this.getElementsByTagName('span')[0].innerHTML = '>';" +
+		"					var input = this.parentNode.parentNode.parentNode.getElementsByTagName('input');" +
+		"					var inputList = Array.prototype.slice.call(input);" +
+		"					inputList.forEach(function(elem) {" +
+		"						elem.style.backgroundColor = '#ffffff';" +
+		"					});" +
+		"				} " +
+		"				updateCreateButton();" +
+		"				\">" +
+		"					<span isactive='y' aria-hidden=\"true\">&gt;</span>" +
+		"				</button>" +
+		"			</span>" +
+		"		</div>" +
+		"		<input type=\"text\" value=\"" + pname + "\" class=\"form-control\" disabled style=\"background-color:#ffffff;\" id='nameField'>" +
+		"		<input type=\"text\" value=\"" + sr + "\" class=\"form-control\" disabled style=\"background-color:#ffffff;\" id='srField'>" +
+		"		<input type=\"text\" value=\"" + roletext + "\" class=\"form-control\" disabled style=\"background-color:#ffffff;\" id='roleField'>" +
+		"		<div class=\"input-group-append\">" +
+		"			<span class=\"input-group-text\" id=\"\" style=\"background-color:#ff3333;\">" +
+		"				<button type=\"button\" class=\"close\" aria-label=\"Close\" onClick=\"" +
+		"				if (getActivePlayers().length <= 12) {document.getElementById('createButton').setAttribute('disabled', true)} delete_row(this); cascade_rows()\">" +
+		"					<span aria-hidden=\"true\">&times;</span>" +
+		"				</button>" +
+		"			</span>" +
+		"		</div>" +
+		"	</div>")
+		}
+	</script>
+	<script>
+		function setTeams(teams, averages) {
+			colors = ['blue', 'red'];
+			for (o = 0; o < 2; o++) {
+				var plrs = teams[colors[o]];
+				for (n = 0; n < 6; n++) {
+					var row = document.getElementById('slot-' + colors[o] + '-'+n);
+					var fields = row.getElementsByTagName('input');
+					var fieldList = Array.prototype.slice.call(fields);
+					fieldList.forEach(function(elem) {
+						if (elem.id == 'nameField') {
+							elem.value = plrs[n]['name'];
+						} else if (elem.id == 'srField') {
+							elem.value = plrs[n]['sr'];
+						} else if (elem.id == 'roleField') {
+							elem.value = plrs[n]['role'];
+							if (plrs[n]['role'] == 'DPS') {
+								elem.style.borderColor = '#ff3333';
+							} else if (plrs[n]['role'] == 'Tank') {
+								elem.style.borderColor = '#29a329';
+							} else if (plrs[n]['role'] == 'Flex') {
+								elem.style.borderColor = '#ff9933';
+							} else {
+								elem.style.borderColor = '#d7d700';
+							}
+						}
+					});
+					document.getElementById('avg'+colors[o]).innerHTML = "Average SR: " + Math.round(averages[colors[o]]);
+				}
+			}
+		}
+	</script>
+	<script src=""></script> <!-- Team generator from GitHub -->
+	<script>
+		function getActivePlayers() {
+			var holder = document.getElementById("playersHolder");
+			var data = holder.getElementsByClassName("input-group");
+			var plrs = [];
+			var inputList = Array.prototype.slice.call(data);
+			inputList.forEach(function(elem) {
+				if (elem.getElementsByClassName('input-group-text')[0].getElementsByTagName('span')[0].getAttribute('isactive') == 'y') {
+					var iname = "";
+					var isr = 0;
+					var irole = "";
+					var data2 = elem.getElementsByTagName('input');
+					var inputList2 = Array.prototype.slice.call(data2);
+					inputList2.forEach(function(elem2) {
+						if (elem2.id == 'nameField') {
+							iname = elem2.value;
+						} else if (elem2.id == 'srField') {
+							isr = Number(elem2.value);
+						} else if (elem2.id == 'roleField') {
+							irole = elem2.value;
+						}
+					});
+					plrs.push({name: iname, sr: isr, role: irole});
+				}
+			});
+			return plrs;
+		}
+	</script>
+	<script>
+		function updateCreateButton() {
+			if (getActivePlayers().length >= 12) {
+				document.getElementById('createButton').removeAttribute('disabled')
+			} else if (getActivePlayers().length < 12) {
+				document.getElementById('createButton').setAttribute('disabled', '')
+			}
+		}
+	</script>
+	<script>
+		function text_to_players(textstring) {
+			var re = /([A-Z]+|#|\w+)+ ([0-5][0-9]{1,3}|[0-9]{1,3}) (Tank|Flex|DPS|Support)/g;
+			var full_success = true;
+			do {
+				m = re.exec(textstring);
+				if (m) {
+					console.log(m[0])
+					var values = m[0].split(' ');
+					//console.log(m);
+					if (document.getElementsByClassName('player-data-row').length < 24) {
+						generate_player(values[0], values[2], Number(values[1]));
+					} else {
+						full_success = false;
+					}
+				}
+			} while (m);
+			return full_success;
+		}
+	</script>
+	<script>
+		function cascade_rows() {
+			if (document.getElementById('dataRow1').getElementsByClassName("input-group").length < 8 && document.getElementById('dataRow2').getElementsByClassName("input-group").length > 0) {
+				document.getElementById('dataRow1').appendChild(document.getElementById('dataRow2').getElementsByClassName("input-group")[0]);
+			}
+			if (document.getElementById('dataRow2').getElementsByClassName("input-group").length < 8 && document.getElementById('dataRow3').getElementsByClassName("input-group").length > 0) {
+				document.getElementById('dataRow2').appendChild(document.getElementById('dataRow3').getElementsByClassName("input-group")[0]);
+			}
+			if (document.getElementById('dataRow3').getElementsByClassName("input-group").length == 0 && document.getElementById('navButton3').classList.contains("active")) {
+				show_row_page(2);
+			} else if (document.getElementById('dataRow2').getElementsByClassName("input-group").length == 0 && document.getElementById('navButton2').classList.contains("active")) {
+				show_row_page(1);
+			}
+			if (document.getElementById('playersHolder').getElementsByClassName("input-group").length == 16) {
+				document.getElementById('navButton3').classList.add("disabled");
+			} else if (document.getElementById('playersHolder').getElementsByClassName("input-group").length == 8) {
+				document.getElementById('navButton2').classList.add("disabled");
+			}
+		}
+	</script>
+	<script>
+		function show_row_page(num) {
+			document.getElementById('dataRow1').setAttribute('hidden', true);
+			document.getElementById('dataRow2').setAttribute('hidden', true);
+			document.getElementById('dataRow3').setAttribute('hidden', true);
+			document.getElementById('dataRow'+num).removeAttribute('hidden');
+			for (id = 1; id < 4; id++) {
+				if (num != id) {
+					document.getElementById('navButton'+id).classList.remove("active");
+				} else if (!document.getElementById('navButton'+id).classList.contains("active")) {
+					document.getElementById('navButton'+id).classList.add("active");
+				}
+			}
+		}
+	</script>
+
+	<title>OW Team Sorter</title>
+</head>
+
+
+
+ <body style="background-color: #D9D9D9;">
+	
+	<div class="container-fluid jumbotron pl-5 pr-5" style="background-color: #d9d9d9;">
+		<div class="row">
+			
+			<!-- TEAM CARDS -->
+			<div class="col-12 col-xl-7">
+				<div class="container">
+					<div class="row">
+						<div class="col-md-6 col-lg-6 pl-0 pr-1">
+
+							<!-- BLUE CARD -->
+							<div class="card mt-2 mb-2">
+								<div class="card-header text-white" style="background-color: #0099ff;">
+									<h5><b>Blue Team</b></h5>
+								</div>
+								<div class="card-body">
+									<div class="input-group pb-1" id="slot-blue-0">
+										<input type="text" value="Player 1" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-blue-1">
+										<input type="text" value="Player 2" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-blue-2">
+										<input type="text" value="Player 3" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-blue-3">
+										<input type="text" value="Player 4" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-blue-4">
+										<input type="text" value="Player 5" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-blue-5">
+										<input type="text" value="Player 6" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<hr class="my-3">
+									<b id="avgblue">Average SR: ???</b>
+								</div>
+							</div>
+
+						</div>
+						<div class="col-md-6 col-lg-6 pl-0 pr-1">
+
+							<!-- RED CARD -->
+							<div class="card mt-2 mb-2">
+								<div class="card-header text-white" style="background-color: #ff3333;">
+									<h5><b>Red Team</b></h5>
+								</div>
+								<div class="card-body">
+									<div class="input-group pb-1" id="slot-red-0">
+										<input type="text" value="Player 7" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-red-1">
+										<input type="text" value="Player 8" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-red-2">
+										<input type="text" value="Player 9" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-red-3">
+										<input type="text" value="Player 10" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-red-4">
+										<input type="text" value="Player 11" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<div class="input-group pb-1" id="slot-red-5">
+										<input type="text" value="Player 12" class="form-control col-5" disabled id='nameField'>
+										<input type="text" value="rank" class="form-control col-3" disabled id='srField'>
+										<input type="text" value="role" class="form-control col-4" disabled id='roleField'>
+									</div>
+									<hr class="my-3">
+									<b id="avgred">Average SR: ???</b>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- ADD PLAYERS -->
+			<div class="col-12 col-xl-5 pl-1 pr-1">
+				<div class="jumbotron mt-2" style="background-color:#f2f2f2;">
+					<div class="row">
+						<h3 class="col-8 col-sm-9 col-md-10 col-lg-10 col-xl-9">Add Players</h3>
+						<button type="button" class="btn btn-secondary justify-content-end col-4 col-sm-3 col-md-2 col-lg-2 col-xl-3" id="quickAdd" data-toggle="modal" data-target="#quickAddModal">Quick Add</button>
+					</div>
+					<hr class="my-3">
+					<p>Enter player information below and press <b>Add</b> to add the player to the list. Once you have enough players, press <b>Create Teams</b> to generate balanced teams.</p>
+					<!-- INPUT FIELDS -->
+					<div class="row pl-3 pr-0">
+						<div class="row col-6 col-sm-4 col-sm-4 mr-0 pt-1">
+							<input type="text" class="form-control" placeholder="Name" aria-label="Name" aria-describedby="basic-addon1" id="nameInput">
+						</div>
+						<div class="row col-6 col-sm-4 mr-0 pt-1"> <!-- ADD JAVASCRIPT TO FORCE LIMITS AFTER YOU LOSE FOCUS -->
+							<input type="number" class="form-control" placeholder="SR" value="2500" min="1" max="5000" aria-label="Number" aria-describedby="basic-addon1" id="srInput">
+						</div>
+						<div class="row col-6 col-sm-3 ml-0 pt-1">
+							<select class="custom-select row" id="roleSelect">
+								<option selected>Choose...</option>
+								<option value="1">DPS</option>
+								<option value="2">Tank</option>
+								<option value="3">Support</option>
+								<option value="4">Flex</option>
+							</select>
+						</div>
+						<div class="row col-6 col-sm-1 mr-0 pt-1">
+							<button type="button" class="btn btn-success" onClick="
+							var rs = document.getElementById('roleSelect')
+							var ni = document.getElementById('nameInput')
+							var si = document.getElementById('srInput')
+							var rowcount = document.getElementsByClassName('player-data-row').length
+							if (rs.value > 0 && !ni.value == '' && !isNaN(Number(si.value)) && (Number(si.value) > 0 && Number(si.value) <= 5000) && rowcount < 24) {
+								if (!document.getElementById('errorLabel').hasAttribute('hidden')) {
+									document.getElementById('errorLabel').setAttribute('hidden', true)
+								}
+								generate_player(
+									document.getElementById('nameInput').value,
+									document.getElementById('roleSelect').value,
+									document.getElementById('srInput').value
+								)
+								if (getActivePlayers().length >= 12) {
+									document.getElementById('createButton').removeAttribute('disabled')
+								}
+								if (document.getElementsByClassName('player-data-row').length == 9 && document.getElementById('navButton1').classList.contains('active')) {
+									show_row_page(2)
+								} else if (document.getElementsByClassName('player-data-row').length == 17 && document.getElementById('navButton2').classList.contains('active')) {
+									show_row_page(3)
+								}
+							} else {
+								if (!(rs.value > 0)) {
+									document.getElementById('errorLabel').innerHTML = 'Role must be selected first!'
+								} else if (ni.value == '') {
+									document.getElementById('errorLabel').innerHTML = 'Name cannot be empty'
+								} else if (rowcount >= 24) {
+									document.getElementById('errorLabel').innerHTML = 'Only up to 24 players are supported.'
+								} else {
+									document.getElementById('errorLabel').innerHTML = 'SR must be between 0 and 5000'
+								}
+								document.getElementById('errorLabel').removeAttribute('hidden')
+							}">Add</button>
+						</div>
+					</div>
+
+					<div class="alert alert-danger mt-2" role="alert" id="errorLabel" hidden>
+						
+					</div>
+					<hr class="my-3">
+					<div class="row">
+						<div class="col-6">
+							<button type="button" class="btn btn-primary mt-0" id="createButton" disabled onClick="
+							var generated = generateTeams(getActivePlayers());
+							if (generated.success) {
+								if (generated.errorMessage.length >= 1) {
+									document.getElementById('errorLabel').innerHTML = 'Warning: ' + generated.errorMessage;
+									document.getElementById('errorLabel').removeAttribute('hidden');
+								} else if (!document.getElementById('errorLabel').hasAttribute('hidden')) {
+									document.getElementById('errorLabel').setAttribute('hidden', true);
+								}
+								setTeams(generated.teams, generated.average);
+							} else {
+								document.getElementById('errorLabel').innerHTML = 'Creation failed: ' + generated.errorMessage;
+								document.getElementById('errorLabel').removeAttribute('hidden');
+							}">Create Teams</button>
+						</div>
+						<div class="col-6 mt-0">
+							<nav aria-label="Page navigation example" id="rowsnav">
+								<ul class="pagination justify-content-end">
+									<li id="navButton1" class="page-item active"><a class="page-link" style="" onClick="show_row_page(1)">1</a></li> <!-- href="#rowsnav" -->
+									<li id="navButton2" class="page-item disabled"><a class="page-link" style="" onClick="show_row_page(2)">2</a></li>
+									<li id="navButton3" class="page-item disabled"><a class="page-link" style="" onClick="show_row_page(3)">3</a></li> <!-- disabled -->
+								</ul>
+							</nav>
+						</div>
+					</div>
+					<div id="playersHolder">
+
+						<!-- example content
+						<div class="input-group pb-1">
+							<input type="text" value="name" class="form-control" disabled style="background-color:#ffffff;">
+							<input type="text" value="sr" class="form-control" disabled style="background-color:#ffffff;">
+							<input type="text" value="role" class="form-control" disabled style="background-color:#ffffff;">
+							<div class="input-group-append">
+								<span class="input-group-text" id="" style="background-color:#ff3333;">
+									<button type="button" class="close" aria-label="Close" onClick="delete_row(this)">
+										<span aria-hidden="true">&times;</span>
+									</button>
+								</span>
+							</div>
+						</div>
+						-->
+						<div id="dataRow1"></div>
+						<div id="dataRow2" hidden></div>
+						<div id="dataRow3" hidden></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="quickAddModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modalLabel">Quick add Players</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div class="form-group">
+							<label for="message-text" class="col-form-label">Enter player info:</label>
+							<textarea rows="4" id="quickAddTextArea" placeholder='John 2350 Tank
+Peter 3480 Flex' class="form-control" id="message-text"></textarea>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-primary" data-dismiss="modal" onClick="text_to_players(document.getElementById('quickAddTextArea').value); updateCreateButton();">Add Players</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+</body>
+
+
+
+</html>
