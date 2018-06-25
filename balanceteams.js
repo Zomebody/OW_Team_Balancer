@@ -65,7 +65,7 @@ function getSlotRoles(plrs) {
 		Flex: 0
 	};
 	for (i = 0; i < plrs.length; i++) {
-		roleCount[plrs[i]['role']]++;
+		roleCounts[plrs[i]['role']]++;
 	}
 	var set_slots = {
 		blue: [],
