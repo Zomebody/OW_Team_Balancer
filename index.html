@@ -378,8 +378,8 @@
 							<button type="button" class="btn btn-primary mt-0" id="createButton" disabled onClick="
 							var generated = generateTeams(getActivePlayers());
 							if (generated.success) {
-								if (generated.errorMessage.length >= 1) {
-									document.getElementById('errorLabel').innerHTML = 'Warning: ' + generated.errorMessage;
+								if (generated['errorMessage'].length >= 1) {
+									document.getElementById('errorLabel').innerHTML = generated.errorMessage;
 									document.getElementById('errorLabel').removeAttribute('hidden');
 								} else if (!document.getElementById('errorLabel').hasAttribute('hidden')) {
 									document.getElementById('errorLabel').setAttribute('hidden', true);
