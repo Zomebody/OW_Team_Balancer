@@ -90,25 +90,35 @@ var lowestDif = Infinity;
 function checkBestTeam(comb) {
 	//console.log('comparing teams!');
 	//console.log(comb);
-	totalBlue = 0;
-	totalRed = 0;
+	totalBlueTSF = 0;
+	totalRedTSF = 0;
+	totalBlueDPS = 0;
+	totalRedDPS = 0;
 	for (g = 0; g < 12; g++) {
 		if (g < 6) { // blue player
-			totalBlue += comb[g]['sr'];
+			if (comb[g]['role'] != 'DPS') {
+				totalBlueTSF += comb[g]['sr'];
+			} else {
+				totalBlueDPS += comb[g]['sr'];
+			}
 		} else { // red player
-			totalRed += comb[g]['sr'];
+			if (comb[g]['role'] != 'DPS') {
+				totalRedTSF += comb[g]['sr'];
+			} else {
+				totalRedDPS += comb[g]['sr'];
+			}
 		}
 	}
-	avgBlue = totalBlue/6;
-	avgRed = totalRed/6;
-	if (Math.abs(avgBlue-avgRed) < lowestDif) {
+	avgBlue = (totalBlueTSF + totalBlueDPS)/6;
+	avgRed = (totalRedTSF + totalRedDPS)/6;
+	if (Math.abs(totalBlueTSF-totalRedTSF) + Math.abs(totalBlueDPS-totalRedDPS) < lowestDif) {
 		bestTeam = {
 			blue: comb.slice(0, 6),
 			red: comb.slice(6, 12),
 			blueAvg: avgBlue,
 			redAvg: avgRed
 		}
-		lowestDif = Math.abs(avgBlue-avgRed);
+		lowestDif = Math.abs(totalBlueTSF-totalRedTSF) + Math.abs(totalBlueDPS-totalRedDPS);
 	}
 	// TO DO: FINISH THIS BLOCK AND SEPERATE DPS AVERAGE FROM TEAM AVERAGE
 }
