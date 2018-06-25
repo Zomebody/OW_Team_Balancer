@@ -217,7 +217,7 @@ function generateTeams(plrsArray) { // player example: {name: 'John', sr: 5000, 
 		average: {
 			blue: 0,
 			red: 0
-		}
+		},
 		errorMessage: "",
 		success: true
 	};
