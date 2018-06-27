@@ -7,12 +7,62 @@
 
 	<!-- Bootstrap CSS -->
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-	<script type="text/javascript" src="https://cdn.rawgit.com/Zomebody/OW_Team_Balancer/master/balanceteams.js"></script>
-	<!--<script type="text/javascript" src="./balanceteams.js"></script>-->
+	<!-- Team generator from GitHub -->
+	<!--<script type="text/javascript" src="https://cdn.rawgit.com/Zomebody/OW_Team_Balancer/master/balanceteams.js"></script>-->
+	<script type="text/javascript" src="./balanceteams.js"></script>
 	<script>
 		function delete_row(e)
 		{
-			e.parentNode.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode.parentNode);
+			var dataHolder = e.parentNode.parentNode.parentNode
+			//var iname = "";
+			//var isr = 0;
+			//var irole = "";
+			var data = dataHolder.getElementsByTagName('input');
+			var inputList = Array.prototype.slice.call(data);
+			inputList.forEach(function(elem) {
+				if (elem.id == 'nameField') {
+					//iname = elem.value;
+					document.getElementById('nameInput').value = elem.value;
+				} else if (elem.id == 'srField') {
+					//isr = Number(elem.value);
+					document.getElementById('srInput').value = elem.value;
+				} else if (elem.id == 'roleField') {
+					//irole = elem.value;
+					var selection = ['DPS', 'Tank', 'Support', 'Flex'].indexOf(elem.value)+1
+					var rInput = document.getElementById('roleSelect').value = selection;
+				}
+			});
+			dataHolder.parentNode.removeChild(dataHolder);
+		}
+	</script>
+	<script>
+		var myStorage = {};
+		function getLastPlayed() {
+			if (myStorage['lastPlayers']) {
+				console.log("last played:", myStorage['lastPlayers']);
+				return myStorage['lastPlayers'];
+			} else {
+				console.log("nothing stored");
+				return [];
+			}
+		}
+	</script>
+	<script>
+		function nameInPlayers(pname, plrlist) {
+			var isDouble = false;
+			plrlist.forEach(function(plr) {
+				if (plr['name'] == pname) {
+					isDouble = true;
+					return;
+				}
+			});
+			return isDouble;
+		}
+	</script>
+	<script>
+		function setErrorLabel(toText) {
+			document.getElementById('errorLabel').innerHTML = toText + "<button type='button' class='close' aria-label='Close'>" +
+			"<span aria-hidden='true' onClick=\"this.parentNode.parentNode.setAttribute('hidden', null);\">&times;</span></button>";
 		}
 	</script>
 	<script>
@@ -75,6 +125,7 @@
 	</script>
 	<script>
 		function setTeams(teams, averages) {
+			myStorage['lastPlayers'] = [];
 			colors = ['blue', 'red'];
 			for (o = 0; o < 2; o++) {
 				var plrs = teams[colors[o]];
@@ -100,12 +151,12 @@
 							}
 						}
 					});
-					document.getElementById('avg'+colors[o]).innerHTML = "Average SR: " + Math.round(averages[colors[o]]);
+					myStorage['lastPlayers'].push(plrs[n]['name']);
 				}
+				document.getElementById('avg'+colors[o]).innerHTML = "Average SR: " + Math.round(averages[colors[o]]);
 			}
 		}
 	</script>
-	<script src=""></script> <!-- Team generator from GitHub -->
 	<script>
 		function getActivePlayers() {
 			var holder = document.getElementById("playersHolder");
@@ -150,9 +201,8 @@
 			do {
 				m = re.exec(textstring);
 				if (m) {
-					console.log(m[0])
+					console.log(m[0]);
 					var values = m[0].split(' ');
-					//console.log(m);
 					if (document.getElementsByClassName('player-data-row').length < 24) {
 						generate_player(values[0], values[2], Number(values[1]));
 					} else {
@@ -204,16 +254,146 @@
 
 
 
- <body style="background-color: #D9D9D9;">
+ <body style="background-color: #666677;"> <!-- d9d9d9 -->
 	
-	<div class="container-fluid jumbotron pl-5 pr-5" style="background-color: #d9d9d9;">
+	<div class="container-fluid jumbotron pl-5 pr-5" style="background-color: #777788;"> <!-- d9d9d9 -->
 		<div class="row">
-			
-			<!-- TEAM CARDS -->
-			<div class="col-12 col-xl-7">
-				<div class="container">
+
+						<!-- ADD PLAYERS -->
+			<div class="col-12 col-xl-5 pl-1 pr-1">
+				<div class="jumbotron mt-2" style="background-color:#f2f2f2;"> <!-- f2f2f2 -->
 					<div class="row">
-						<div class="col-md-6 col-lg-6 pl-0 pr-1">
+						<h3 class="col-8 col-sm-9 col-md-10 col-lg-10 col-xl-9">Add Players</h3>
+						<button type="button" class="btn btn-secondary justify-content-end col-4 col-sm-3 col-md-2 col-lg-2 col-xl-3" id="quickAdd" data-toggle="modal" data-target="#quickAddModal">Quick Add</button>
+					</div>
+					<hr class="my-3">
+					<p class="text-justify">Enter player information below and press <b>Add</b> to add the player to the list. Once you have enough players, press <b>Create Teams</b> to generate balanced teams.</p>
+					<!-- INPUT FIELDS -->
+					<div class="row pl-3 pr-0">
+						<div class="row col-6 col-sm-5 mr-0 pt-1">
+							<input type="text" class="form-control" placeholder="Name" aria-label="Name" aria-describedby="basic-addon1" id="nameInput">
+						</div>
+						<div class="row col-6 col-sm-3 mr-0 pt-1"> <!-- ADD JAVASCRIPT TO FORCE LIMITS AFTER YOU LOSE FOCUS -->
+							<input type="number" class="form-control" placeholder="SR" value="2500" min="1" max="5000" aria-label="Number" aria-describedby="basic-addon1" id="srInput">
+						</div>
+						<div class="row col-6 col-sm-3 ml-0 pt-1">
+							<select class="custom-select row" id="roleSelect">
+								<option selected>Choose...</option>
+								<option value="1">DPS</option>
+								<option value="2">Tank</option>
+								<option value="3">Support</option>
+								<option value="4">Flex</option>
+							</select>
+						</div>
+						<div class="row col-6 col-sm-1 mr-0 pt-1">
+							<button type="button" class="btn btn-success" onClick="
+							var rs = document.getElementById('roleSelect')
+							var ni = document.getElementById('nameInput')
+							var si = document.getElementById('srInput')
+							var plrs = getActivePlayers();
+							var nameDouble = nameInPlayers(ni.value, plrs);
+							console.log(nameDouble);
+							var rowcount = document.getElementsByClassName('player-data-row').length
+							if (nameDouble == false && rs.value > 0 && !ni.value == '' && !isNaN(Number(si.value)) && (Number(si.value) > 0 && Number(si.value) <= 5000) && rowcount < 24) {
+								if (!document.getElementById('errorLabel').hasAttribute('hidden')) {
+									document.getElementById('errorLabel').setAttribute('hidden', true)
+								}
+								generate_player(
+									document.getElementById('nameInput').value,
+									document.getElementById('roleSelect').value,
+									document.getElementById('srInput').value
+								)
+								if (getActivePlayers().length >= 12) {
+									document.getElementById('createButton').removeAttribute('disabled')
+								}
+								if (document.getElementsByClassName('player-data-row').length == 9 && document.getElementById('navButton1').classList.contains('active')) {
+									show_row_page(2)
+								} else if (document.getElementsByClassName('player-data-row').length == 17 && document.getElementById('navButton2').classList.contains('active')) {
+									show_row_page(3)
+								}
+							} else {
+								if (nameDouble == true) {
+									setErrorLabel('Name already in list!');
+								} else if (!(rs.value > 0)) {
+									setErrorLabel('Role must be selected first!');
+								} else if (ni.value == '') {
+									setErrorLabel('Name cannot be empty');
+								} else if (rowcount >= 24) {
+									setErrorLabel('Only up to 24 players are supported.');
+								} else {
+									setErrorLabel('SR must be between 0 and 5000');
+								}
+								document.getElementById('errorLabel').removeAttribute('hidden')
+							}">Add</button>
+						</div>
+					</div>
+
+					<div class="alert alert-danger mt-2" role="alert" id="errorLabel" hidden>
+						
+					</div>
+					<hr class="my-3">
+					<div class="row">
+						<div class="col-6">
+							<button type="button" class="btn btn-primary mt-0" id="createButton" disabled onClick="
+							var lastPlayed = getLastPlayed();
+							var activePlayers = getActivePlayers();
+							var notPlayed = activePlayers.filter(function(e) {return !lastPlayed.includes(e['name']);});
+							for (t = 0; t < notPlayed.length; t++) {
+								notPlayed[t] = notPlayed[t]['name'];
+							}
+							console.log('not played:', notPlayed);
+							//var generated = generateTeams(activePlayers, notPlayed, document.getElementById('mustPickLabel').checked, document.getElementById('quickAlgorithm').checked);
+							var generated = generateTeams(activePlayers, notPlayed, document.getElementById('algorithmSelect').value == 2, document.getElementById('algorithmSelect').value == 1);
+							if (generated.success) {
+								if (generated['errorMessage'].length >= 1) {
+									setErrorLabel(generated.errorMessage);
+									document.getElementById('errorLabel').removeAttribute('hidden');
+								} else if (!document.getElementById('errorLabel').hasAttribute('hidden')) {
+									document.getElementById('errorLabel').setAttribute('hidden', true);
+								}
+								setTeams(generated.teams, generated.average);
+							} else {
+								setErrorLabel('Creation failed: ' + generated.errorMessage);
+								document.getElementById('errorLabel').removeAttribute('hidden');
+							}">Create Teams</button>
+						</div>
+						<div class="col-6 mt-0">
+							<nav aria-label="Page navigation example" id="rowsnav">
+								<ul class="pagination justify-content-end">
+									<li id="navButton1" class="page-item active"><a class="page-link" style="" onClick="show_row_page(1)">1</a></li> <!-- href="#rowsnav" -->
+									<li id="navButton2" class="page-item disabled"><a class="page-link" style="" onClick="show_row_page(2)">2</a></li>
+									<li id="navButton3" class="page-item disabled"><a class="page-link" style="" onClick="show_row_page(3)">3</a></li> <!-- disabled -->
+								</ul>
+							</nav>
+						</div>
+					</div>
+					<div id="playersHolder">
+						<!-- example content
+						<div class="input-group pb-1">
+							<input type="text" value="name" class="form-control" disabled style="background-color:#ffffff;">
+							<input type="text" value="sr" class="form-control" disabled style="background-color:#ffffff;">
+							<input type="text" value="role" class="form-control" disabled style="background-color:#ffffff;">
+							<div class="input-group-append">
+								<span class="input-group-text" id="" style="background-color:#ff3333;">
+									<button type="button" class="close" aria-label="Close" onClick="delete_row(this)">
+										<span aria-hidden="true">&times;</span>
+									</button>
+								</span>
+							</div>
+						</div>
+						-->
+						<div id="dataRow1"></div>
+						<div id="dataRow2" hidden></div>
+						<div id="dataRow3" hidden></div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- TEAM CARDS AND OPTIONS -->
+			<div class="col-12 col-xl-7">
+				<div class="container pl-1 pr-1">
+					<div class="row">
+						<div class="col-md-6 col-lg-6 pl-1 pr-2">
 
 							<!-- BLUE CARD -->
 							<div class="card mt-2 mb-2">
@@ -257,7 +437,7 @@
 							</div>
 
 						</div>
-						<div class="col-md-6 col-lg-6 pl-0 pr-1">
+						<div class="col-md-6 col-lg-6 pl-1 pr-2">
 
 							<!-- RED CARD -->
 							<div class="card mt-2 mb-2">
@@ -302,126 +482,62 @@
 
 						</div>
 					</div>
+
+					<!-- OPTIONS AND CONTACT MENU -->
+					<div class="row">
+						<!-- OPTIONS -->
+						<div class="container col-md-6 col-12">
+							<div class="jumbotron mt-2 pt-5" style="background-color:#f2f2f2;" id="optionsJumbo">
+								<h3 class="col-12">Options</h3>
+								<hr class="my-3">
+								<div class="form-group row">
+									<label class="row col-md-5 col-xs-6 col-6 ml-2 pt-2">Algorithm:</label>
+									<div class="row col-md-7 col-xs-6 col-6 ml-0 pt-1">
+										<select class="custom-select row" id="algorithmSelect">
+											<option value="0" selected>Best balance</option>
+											<option value="1">Quick find</option>
+											<option value="2">Inclusive find</option>
+										</select>
+									</div>
+								</div>
+								
+
+								<!--
+								<div class="form-group row">
+									<div class="col-10">Use must-pick rule:</div>
+									<div class="col-2">
+										<div class="form-check">
+											<input class="form-check-input" type="checkbox" id="mustPickLabel">
+											<label class="form-check-label" for="mustPickLabel"></label>
+										</div>
+									</div>
+								</div>
+
+								<div class="form-group row">
+									<div class="col-10">Quick find teams:</div>
+									<div class="col-2">
+										<div class="form-check">
+											<input class="form-check-input" type="checkbox" id="quickAlgorithm">
+											<label class="form-check-label" for="quickAlgorithm"></label>
+										</div>
+									</div>
+								</div>
+								<p><b>Note:</b> Quick find teams does take place when the must-pick option is ticked.</p>
+								-->
+							</div>
+						</div>
+						<!-- CONTACT -->
+						<div class="container col-md-6 col-12">
+							<div class="jumbotron mt-2 pt-5" style="background-color:#f2f2f2;" id="contactJumbo">
+								<h3 class="col-12">Contact</h3>
+								<hr class="my-3">
+								<p>If you have any suggestions feel free to contact user Zomebody#4081 on Discord.</p>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 			
-			<!-- ADD PLAYERS -->
-			<div class="col-12 col-xl-5 pl-1 pr-1">
-				<div class="jumbotron mt-2" style="background-color:#f2f2f2;">
-					<div class="row">
-						<h3 class="col-8 col-sm-9 col-md-10 col-lg-10 col-xl-9">Add Players</h3>
-						<button type="button" class="btn btn-secondary justify-content-end col-4 col-sm-3 col-md-2 col-lg-2 col-xl-3" id="quickAdd" data-toggle="modal" data-target="#quickAddModal">Quick Add</button>
-					</div>
-					<hr class="my-3">
-					<p>Enter player information below and press <b>Add</b> to add the player to the list. Once you have enough players, press <b>Create Teams</b> to generate balanced teams.</p>
-					<!-- INPUT FIELDS -->
-					<div class="row pl-3 pr-0">
-						<div class="row col-6 col-sm-4 col-sm-4 mr-0 pt-1">
-							<input type="text" class="form-control" placeholder="Name" aria-label="Name" aria-describedby="basic-addon1" id="nameInput">
-						</div>
-						<div class="row col-6 col-sm-4 mr-0 pt-1"> <!-- ADD JAVASCRIPT TO FORCE LIMITS AFTER YOU LOSE FOCUS -->
-							<input type="number" class="form-control" placeholder="SR" value="2500" min="1" max="5000" aria-label="Number" aria-describedby="basic-addon1" id="srInput">
-						</div>
-						<div class="row col-6 col-sm-3 ml-0 pt-1">
-							<select class="custom-select row" id="roleSelect">
-								<option selected>Choose...</option>
-								<option value="1">DPS</option>
-								<option value="2">Tank</option>
-								<option value="3">Support</option>
-								<option value="4">Flex</option>
-							</select>
-						</div>
-						<div class="row col-6 col-sm-1 mr-0 pt-1">
-							<button type="button" class="btn btn-success" onClick="
-							var rs = document.getElementById('roleSelect')
-							var ni = document.getElementById('nameInput')
-							var si = document.getElementById('srInput')
-							var rowcount = document.getElementsByClassName('player-data-row').length
-							if (rs.value > 0 && !ni.value == '' && !isNaN(Number(si.value)) && (Number(si.value) > 0 && Number(si.value) <= 5000) && rowcount < 24) {
-								if (!document.getElementById('errorLabel').hasAttribute('hidden')) {
-									document.getElementById('errorLabel').setAttribute('hidden', true)
-								}
-								generate_player(
-									document.getElementById('nameInput').value,
-									document.getElementById('roleSelect').value,
-									document.getElementById('srInput').value
-								)
-								if (getActivePlayers().length >= 12) {
-									document.getElementById('createButton').removeAttribute('disabled')
-								}
-								if (document.getElementsByClassName('player-data-row').length == 9 && document.getElementById('navButton1').classList.contains('active')) {
-									show_row_page(2)
-								} else if (document.getElementsByClassName('player-data-row').length == 17 && document.getElementById('navButton2').classList.contains('active')) {
-									show_row_page(3)
-								}
-							} else {
-								if (!(rs.value > 0)) {
-									document.getElementById('errorLabel').innerHTML = 'Role must be selected first!'
-								} else if (ni.value == '') {
-									document.getElementById('errorLabel').innerHTML = 'Name cannot be empty'
-								} else if (rowcount >= 24) {
-									document.getElementById('errorLabel').innerHTML = 'Only up to 24 players are supported.'
-								} else {
-									document.getElementById('errorLabel').innerHTML = 'SR must be between 0 and 5000'
-								}
-								document.getElementById('errorLabel').removeAttribute('hidden')
-							}">Add</button>
-						</div>
-					</div>
-
-					<div class="alert alert-danger mt-2" role="alert" id="errorLabel" hidden>
-						
-					</div>
-					<hr class="my-3">
-					<div class="row">
-						<div class="col-6">
-							<button type="button" class="btn btn-primary mt-0" id="createButton" disabled onClick="
-							var generated = generateTeams(getActivePlayers());
-							if (generated.success) {
-								if (generated['errorMessage'].length >= 1) {
-									document.getElementById('errorLabel').innerHTML = generated.errorMessage;
-									document.getElementById('errorLabel').removeAttribute('hidden');
-								} else if (!document.getElementById('errorLabel').hasAttribute('hidden')) {
-									document.getElementById('errorLabel').setAttribute('hidden', true);
-								}
-								setTeams(generated.teams, generated.average);
-							} else {
-								document.getElementById('errorLabel').innerHTML = 'Creation failed: ' + generated.errorMessage;
-								document.getElementById('errorLabel').removeAttribute('hidden');
-							}">Create Teams</button>
-						</div>
-						<div class="col-6 mt-0">
-							<nav aria-label="Page navigation example" id="rowsnav">
-								<ul class="pagination justify-content-end">
-									<li id="navButton1" class="page-item active"><a class="page-link" style="" onClick="show_row_page(1)">1</a></li> <!-- href="#rowsnav" -->
-									<li id="navButton2" class="page-item disabled"><a class="page-link" style="" onClick="show_row_page(2)">2</a></li>
-									<li id="navButton3" class="page-item disabled"><a class="page-link" style="" onClick="show_row_page(3)">3</a></li> <!-- disabled -->
-								</ul>
-							</nav>
-						</div>
-					</div>
-					<div id="playersHolder">
-
-						<!-- example content
-						<div class="input-group pb-1">
-							<input type="text" value="name" class="form-control" disabled style="background-color:#ffffff;">
-							<input type="text" value="sr" class="form-control" disabled style="background-color:#ffffff;">
-							<input type="text" value="role" class="form-control" disabled style="background-color:#ffffff;">
-							<div class="input-group-append">
-								<span class="input-group-text" id="" style="background-color:#ff3333;">
-									<button type="button" class="close" aria-label="Close" onClick="delete_row(this)">
-										<span aria-hidden="true">&times;</span>
-									</button>
-								</span>
-							</div>
-						</div>
-						-->
-						<div id="dataRow1"></div>
-						<div id="dataRow2" hidden></div>
-						<div id="dataRow3" hidden></div>
-					</div>
-				</div>
-			</div>
 		</div>
 	</div>
 
