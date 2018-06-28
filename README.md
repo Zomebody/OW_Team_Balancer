@@ -20,3 +20,6 @@ Simply add players by filling in a name, rank and role on the menu to the right.
 
 ### Simple edits on the fly
 You can quickly enable or disable players by pressing the button to the left of their entry. Additionally, when you remove a player from the list, its data is added to the input fields. This makes it quick and easy to make changes to some player's data.
+
+### Known issues
+Inclusive find may ignore some players forever. This is usually the case with 5+ Flex players since an 'optimal' match will only include 1 Flex player on each team. Because of that, 3 Flex players are always marked as must-picks, however only 2 can be sorted into slots. A solution would be to fill in each slot's role depending on must-picks first when inclusive find is chosen.
