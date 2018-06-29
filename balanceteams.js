@@ -32,6 +32,21 @@ var slot_roles = [
 	['Flex', 'Tank', 'Support', 'DPS'] // Flex slot
 ];
 
+/**
+ * Shuffles array in place.
+ * @param {Array} a items An array containing the items.
+ */
+function shuffle(a) {
+    var j, x, i;
+    for (i = a.length - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * (i + 1));
+        x = a[i];
+        a[i] = a[j];
+        a[j] = x;
+    }
+    return a;
+}
+
 // Similar to Python's range(x, y)
 function arrayRange(from, to) {
 	arr = [];
@@ -42,7 +57,7 @@ function arrayRange(from, to) {
 }
 
 // Returns given the number of roles, which role should be set at the passed index
-function getSlot(roleCounts, index) {
+function getRegularSlot(roleCounts, index) {
 	errors = [
 		"Not enough DPS or Flex players.",
 		"Not enough Tank or Flex players.",
@@ -60,6 +75,61 @@ function getSlot(roleCounts, index) {
 	return errors[index];
 }
 
+function getMaxArrayLength(arrayList) {
+	var highest = 0;
+	for (q = 0; q < arrayList.length; q++) {
+		highest = Math.max(arrayList[q].length, highest);
+	}
+	return highest;
+}
+
+// Actual roles for when must picks are enabled
+function getForcedRoles(plrs) {
+	var forcedRoles = {
+		DPS: 0,
+		Tank: 0,
+		Support: 0,
+		Flex: 0
+	};
+	for (t = 0; t < plrs.length; t++) {
+		if (mustPlayArray.includes(plrs[t]['name'])) {
+			forcedRoles[plrs[t]['role']] += 1;
+		}
+	}
+	return forcedRoles;
+}
+
+/*
+Object.keys(obj).forEach(function(key) {
+
+  console.log(key, obj[key]);
+
+});
+*/
+
+function preLockSlots(plrs, slotsLists, regularRoles) {
+	var forcedRoles = getForcedRoles(plrs);
+	var maxDepth = getMaxArrayLength(slot_roles);
+	var roleDepth = -1;
+	Object.keys(forcedRoles).forEach(function(roleKey) {
+		roleDepth = -1;
+		console.log("while evaluation:", (forcedRoles[roleKey] > 0), (roleDepth < maxDepth-1));
+		while (forcedRoles[roleKey] > 0 && roleDepth < maxDepth-1) {
+			roleDepth++;
+			for (l = 0; l < slot_order.length; l++) {
+				console.log(slot_roles[slot_order[l][1]][roleDepth], roleKey, slotsLists[slot_order[l][0]][slot_order[l][1]]);
+				if (forcedRoles[roleKey] > 0 && slot_roles[slot_order[l][1]][roleDepth] == roleKey && slotsLists[slot_order[l][0]][slot_order[l][1]] == null) { // edit and fix
+					slotsLists[slot_order[l][0]][slot_order[l][1]] = roleKey;
+					forcedRoles[roleKey]--;
+					regularRoles[roleKey]--;
+				}
+			}
+		}
+	});
+	console.log("slotsLists:", slotsLists);
+	return slotsLists; //console.log("slotsLists:", slotsLists);
+}
+
 // Return an array with 12 slots, 6 for blue, 6 for red
 function getSlotRoles(plrs) {
 	var success = true;
@@ -73,17 +143,24 @@ function getSlotRoles(plrs) {
 		roleCounts[plrs[i]['role']]++;
 	}
 	var set_slots = {
-		blue: [],
-		red: []
+		blue: [null, null, null, null, null, null],
+		red: [null, null, null, null, null, null]
 	};
+	if (mustPick == true) { // pre-fill with must-pick roles
+		set_slots = preLockSlots(plrs, set_slots, roleCounts);
+	}
 	for (i = 0; i < slot_order.length; i++) {
-		nextRole = getSlot(roleCounts, slot_order[i][1]);
-		if (['DPS', 'Tank', 'Support', 'Flex'].includes(nextRole)) {
-			set_slots[slot_order[i][0]].push(nextRole);
-		} else {
-			return nextRole;
+		nextRole = getRegularSlot(roleCounts, slot_order[i][1]);
+		console.log(nextRole);
+		if (set_slots[slot_order[i][0]][slot_order[i][1]] == null) {
+			if (['DPS', 'Tank', 'Support', 'Flex'].includes(nextRole)) {
+				set_slots[slot_order[i][0]][slot_order[i][1]] = nextRole;
+			} else {
+				return nextRole;
+			}
 		}
 	}
+	console.log(set_slots);
 	return set_slots;
 }
 
@@ -273,9 +350,17 @@ function generateTeams(plrsArray, mustPlayNameArray, mustPicks, optimize) { // p
 	// Step 1. Return value in advance + reset global variables
 	console.log("mustPicks:", mustPicks, "optimize:", optimize);
 	checkTeam = (mustPicks == true) ? checkBestMustTeam : checkBestTeam;
-	optCheck = (optimize == true) ? quickContinueCheck : continueCheck;
+	optCheck = (optimize == true || mustPicks == true) ? quickContinueCheck : continueCheck;
 	mustPlayArray = mustPlayNameArray;
 	mustPick = mustPicks;
+	console.log("mustPick:", mustPick);
+	if (optimize || mustPick) {
+		shuffle(plrsArray);
+		shuffle(mustPlayArray);
+	//else if (mustPick) {
+	//	shuffle(plrsArray);
+	//	shuffle(mustPlayArray);
+	}
 	var generated = {
 		teams: {
 			blue: [],
