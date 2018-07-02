@@ -79,7 +79,7 @@
 				document.getElementById('navButton3').classList.remove("disabled")
 			}
 			roles = ["DPS", "Tank", "Support", "Flex"]
-			var roletext = (!(isNaN(Number(role))) ? roles[role-1] : role);
+			var roletext = (!(isNaN(Number(role))) ? roles[role-1] : ({dps:'DPS',tank:'Tank',support:'Support',flex:'Flex'})[role]); // fix capitalization with dictionary
 			addto.insertAdjacentHTML("beforeend", ""+
 		"	<div class=\"input-group pb-1 player-data-row\">" +
 		"		<div class=\"input-group-prepend\">" +
@@ -196,7 +196,7 @@
 	</script>
 	<script>
 		function text_to_players(textstring) {
-			var re = /([A-Z]+|#|\w+)+ ([0-5][0-9]{1,3}|[0-9]{1,3}) (Tank|Flex|DPS|Support)/g;
+			var re = /([A-Z]+|#|\w+)+ ([0-5][0-9]{1,3}|[0-9]{1,3}) (Tank|Flex|DPS|Support)/gim;
 			var full_success = true;
 			do {
 				m = re.exec(textstring);
@@ -204,7 +204,8 @@
 					console.log(m[0]);
 					var values = m[0].split(' ');
 					if (document.getElementsByClassName('player-data-row').length < 24) {
-						generate_player(values[0], values[2], Number(values[1]));
+						// the middle part makes lowercase of values[2] with the first character being uppercase
+						generate_player(values[0], values[2].toLowerCase(), Number(values[1]));
 					} else {
 						full_success = false;
 					}
